@@ -46,7 +46,7 @@ for idx in range(n):
         records.append([sub_list[i]["question"], sub_list[i]["answer"], response["choices"][i]["text"]])
 
 df = pd.DataFrame.from_records(records, columns=["question", "ground_truth", "model_output"])
-df["ground_truth_answer"] = df["ground_truth"].apply(lambda x: float(x.split("### ")[1]))
+df["ground_truth_answer"] = df["ground_truth"].apply(lambda x: float(x.split("### ")[1].replace(",", "")))
 df["model_answer"] = df["model_output"].apply(extract_answer)
 correct_df = df[(df["ground_truth_answer"] - df["model_answer"]).abs() < 1e-5]
 print("correct percentage: {0:0.1f}".format(100*correct_df.shape[0]/df.shape[0]))
