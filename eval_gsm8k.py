@@ -2,6 +2,7 @@ import openai
 import pandas as pd
 from pathlib import Path
 import jsonlines
+import sys
 import os
 from prompt import prompt_template, task_description, example_list
 
@@ -18,6 +19,7 @@ def extract_answer(x):
         except:
             return None
 
+output_file = sys.argv[1]
 openai.api_key = os.getenv("OPENAI_API_KEY")
 test_file = "./grade-school-math/grade_school_math/data/test.jsonl"
 if not Path(test_file).exists():
@@ -50,4 +52,4 @@ df["ground_truth_answer"] = df["ground_truth"].apply(lambda x: float(x.split("##
 df["model_answer"] = df["model_output"].apply(extract_answer)
 correct_df = df[(df["ground_truth_answer"] - df["model_answer"]).abs() < 1e-5]
 print("correct percentage: {0:0.1f}".format(100*correct_df.shape[0]/df.shape[0]))
-df.to_csv("result.csv", index=False)
+df.to_csv(output_file, index=False)
