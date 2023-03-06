@@ -13,7 +13,10 @@ def extract_answer(x):
     if answer.endswith("%"):
         return float(answer.strip("%")) / 100.0
     else:
-        return float(answer)
+        try:
+            return float(answer)
+        except:
+            return None
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 test_file = "./grade-school-math/grade_school_math/data/test.jsonl"
@@ -30,19 +33,21 @@ bs = 20
 qa_list = test_qa_list
 n = (len(qa_list) // bs) + 1
 for idx in range(n):
+    print(idx)
     sub_list = qa_list[(idx*bs):((idx+1)*bs)]
     prompts = [gsm8k_prompt + "Question: " + qa["question"] + "\nAnswer:" for qa in sub_list]
     response = openai.Completion.create(
         model="text-davinci-003",
         prompt=prompts,
-        max_tokens=512,
+        max_tokens=450,
         temperature=0
     )
-    for i in range(bs):
+    for i in range(len(sub_list)):
         records.append([sub_list[i]["question"], sub_list[i]["answer"], response["choices"][i]["text"]])
 
 df = pd.DataFrame.from_records(records, columns=["question", "ground_truth", "model_output"])
 df["ground_truth_answer"] = df["ground_truth"].apply(lambda x: float(x.split("### ")[1]))
 df["model_answer"] = df["model_output"].apply(extract_answer)
 correct_df = df[(df["ground_truth_answer"] - df["model_answer"]).abs() < 1e-5]
-print("correct percentage: {.3f}", correct_df.shape[0]/df.shape[0])
+print("correct percentage: {0:0.1f}".format(100*correct_df.shape[0]/df.shape[0]))
+df.to_csv("result.csv", index=False)
